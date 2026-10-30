@@ -1,16 +1,33 @@
 const colors = require('tailwindcss/colors');
 
+// Lucent: cool, deep-space greys. The darker steps are used for surfaces and the
+// lighter steps for text, so the whole panel picks up the new tone automatically.
 const gray = {
-    50: 'hsl(216, 33%, 97%)',
-    100: 'hsl(214, 15%, 91%)',
-    200: 'hsl(210, 16%, 82%)',
-    300: 'hsl(211, 13%, 65%)',
-    400: 'hsl(211, 10%, 53%)',
-    500: 'hsl(211, 12%, 43%)',
-    600: 'hsl(209, 14%, 37%)',
-    700: 'hsl(209, 18%, 30%)',
-    800: 'hsl(209, 20%, 25%)',
-    900: 'hsl(210, 24%, 16%)',
+    50: '#f4f6fb',
+    100: '#e6e9f2',
+    200: '#c8cedd',
+    300: '#a2abc2',
+    400: '#7c87a3',
+    500: '#5a6482',
+    600: '#3b4361',
+    700: '#252b43',
+    800: '#151a2c',
+    900: '#0b0e1a',
+};
+
+// Lucent accent: electric violet. Replaces the stock blue everywhere "primary" or
+// "blue" is used (buttons, links, focus rings).
+const violet = {
+    50: '#f2f0ff',
+    100: '#e5e1ff',
+    200: '#cec6ff',
+    300: '#ae9fff',
+    400: '#8f7cff',
+    500: '#7a5cff',
+    600: '#6842f5',
+    700: '#5733d6',
+    800: '#472bab',
+    900: '#3a2687',
 };
 
 module.exports = {
@@ -20,13 +37,16 @@ module.exports = {
     theme: {
         extend: {
             fontFamily: {
-                header: ['"IBM Plex Sans"', '"Roboto"', 'system-ui', 'sans-serif'],
+                sans: ['"Inter"', 'system-ui', '-apple-system', '"Segoe UI"', 'sans-serif'],
+                header: ['"Space Grotesk"', '"Inter"', 'system-ui', 'sans-serif'],
+                mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
             },
             colors: {
-                black: '#131a20',
+                black: '#05070c',
                 // "primary" and "neutral" are deprecated, prefer the use of "blue" and "gray"
                 // in new code.
-                primary: colors.blue,
+                primary: violet,
+                blue: violet,
                 gray: gray,
                 neutral: gray,
                 cyan: colors.cyan,
@@ -40,6 +60,10 @@ module.exports = {
             borderColor: theme => ({
                 default: theme('colors.neutral.400', 'currentColor'),
             }),
+            boxShadow: {
+                glow: '0 0 0 1px rgba(122, 92, 255, 0.35), 0 8px 30px -6px rgba(122, 92, 255, 0.45)',
+                'glow-cyan': '0 0 0 1px rgba(34, 211, 238, 0.35), 0 8px 30px -6px rgba(34, 211, 238, 0.4)',
+            },
         },
     },
     plugins: [

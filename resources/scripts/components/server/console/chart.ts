@@ -1,5 +1,7 @@
 import {
     Chart as ChartJS,
+    Plugin,
+    ScriptableContext,
     ChartData,
     ChartDataset,
     ChartOptions,
@@ -12,9 +14,51 @@ import { DeepPartial } from 'ts-essentials';
 import { useState } from 'react';
 import { deepmerge, deepmergeCustom } from 'deepmerge-ts';
 import { theme } from 'twin.macro';
-import { hexToRgba } from '@/lib/helpers';
 
-ChartJS.register(LineElement, PointElement, Filler, LinearScale);
+// Soft neon glow under each line, using the dataset's own colour.
+const glow: Plugin<'line'> = {
+    id: 'lucentGlow',
+    beforeDatasetDraw(chart, args) {
+        const dataset = chart.data.datasets[args.index];
+        chart.ctx.save();
+        chart.ctx.shadowColor =
+            typeof dataset.borderColor === 'string' ? dataset.borderColor : 'rgba(122, 92, 255, 0.8)';
+        chart.ctx.shadowBlur = 14;
+        chart.ctx.shadowOffsetY = 4;
+    },
+    afterDatasetDraw(chart) {
+        chart.ctx.restore();
+    },
+};
+
+ChartJS.register(LineElement, PointElement, Filler, LinearScale, glow);
+
+export interface ChartColor {
+    line: string;
+    // RGB triplet, e.g. "34, 211, 238", used for the gradient fill.
+    rgb: string;
+}
+
+export const chartColors: Record<'cyan' | 'violet' | 'fuchsia', ChartColor> = {
+    cyan: { line: '#22d3ee', rgb: '34, 211, 238' },
+    violet: { line: '#a78bfa', rgb: '139, 92, 246' },
+    fuchsia: { line: '#e879f9', rgb: '232, 121, 249' },
+};
+
+// Vertical gradient that fades from the line colour to transparent.
+export const gradientFill =
+    (rgb: string) =>
+    (context: ScriptableContext<'line'>): CanvasGradient | string => {
+        const { ctx, chartArea } = context.chart;
+        if (!chartArea) {
+            return `rgba(${rgb}, 0.15)`;
+        }
+        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+        gradient.addColorStop(0, `rgba(${rgb}, 0.55)`);
+        gradient.addColorStop(0.65, `rgba(${rgb}, 0.12)`);
+        gradient.addColorStop(1, `rgba(${rgb}, 0)`);
+        return gradient;
+    };
 
 const options: ChartOptions<'line'> = {
     responsive: true,
@@ -45,16 +89,16 @@ const options: ChartOptions<'line'> = {
             type: 'linear',
             grid: {
                 display: true,
-                color: theme('colors.gray.700'),
+                color: 'rgba(255, 255, 255, 0.05)',
                 drawBorder: false,
             },
             ticks: {
                 display: true,
                 count: 3,
-                color: theme('colors.gray.200'),
+                color: theme('colors.gray.400'),
                 font: {
-                    family: theme('fontFamily.sans'),
-                    size: 11,
+                    family: theme('fontFamily.mono'),
+                    size: 10,
                     weight: '400',
                 },
             },
@@ -65,7 +109,8 @@ const options: ChartOptions<'line'> = {
             radius: 0,
         },
         line: {
-            tension: 0.15,
+            tension: 0.35,
+            borderWidth: 2,
         },
     },
 };
@@ -91,8 +136,8 @@ function getEmptyData(label: string, sets = 1, callback?: ChartDatasetCallback |
                         fill: true,
                         label,
                         data: Array(20).fill(-5),
-                        borderColor: theme('colors.cyan.400'),
-                        backgroundColor: hexToRgba(theme('colors.cyan.700'), 0.5),
+                        borderColor: chartColors.cyan.line,
+                        backgroundColor: gradientFill(chartColors.cyan.rgb),
                     },
                     index
                 )
@@ -139,9 +184,12 @@ function useChart(label: string, opts?: UseChartOptions) {
     return { props: { data, options }, push, clear };
 }
 
-function useChartTickLabel(label: string, max: number, tickLabel: string, roundTo?: number) {
+function useChartTickLabel(label: string, max: number, tickLabel: string, roundTo?: number, color?: ChartColor) {
     return useChart(label, {
         sets: 1,
+        callback: color
+            ? (opts) => ({ ...opts, borderColor: color.line, backgroundColor: gradientFill(color.rgb) })
+            : undefined,
         options: {
             scales: {
                 y: {

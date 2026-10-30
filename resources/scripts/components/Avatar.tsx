@@ -2,7 +2,7 @@ import React from 'react';
 import BoringAvatar, { AvatarProps } from 'boring-avatars';
 import { useStoreState } from '@/state/hooks';
 
-const palette = ['#FFAD08', '#EDD75A', '#73B06F', '#0C8F8F', '#587291'];
+const palette = ['#22d3ee', '#7a5cff', '#a855f7', '#0ea5e9', '#f0abfc'];
 
 type Props = Omit<AvatarProps, 'colors'>;
 

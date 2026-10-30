@@ -10,12 +10,17 @@ import StatGraphs from '@/components/server/console/StatGraphs';
 import PowerButtons from '@/components/server/console/PowerButtons';
 import ServerDetailsBlock from '@/components/server/console/ServerDetailsBlock';
 import { Alert } from '@/components/elements/alert';
+import ServerTile from '@/components/elements/ServerTile';
+import StatusPill from '@/components/elements/StatusPill';
 
 export type PowerAction = 'start' | 'stop' | 'restart' | 'kill';
 
 const ServerConsoleContainer = () => {
     const name = ServerContext.useStoreState((state) => state.server.data!.name);
+    const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
+    const node = ServerContext.useStoreState((state) => state.server.data!.node);
     const description = ServerContext.useStoreState((state) => state.server.data!.description);
+    const status = ServerContext.useStoreState((state) => state.status.value);
     const isInstalling = ServerContext.useStoreState((state) => state.server.isInstalling);
     const isTransferring = ServerContext.useStoreState((state) => state.server.data!.isTransferring);
     const eggFeatures = ServerContext.useStoreState((state) => state.server.data!.eggFeatures, isEqual);
@@ -32,28 +37,43 @@ const ServerConsoleContainer = () => {
                         : 'This server is currently being transferred to another node and all actions are unavailable.'}
                 </Alert>
             )}
-            <div className={'grid grid-cols-4 gap-4 mb-4'}>
-                <div className={'hidden sm:block sm:col-span-2 lg:col-span-3 pr-4'}>
-                    <h1 className={'font-header font-medium text-2xl text-gray-50 leading-relaxed line-clamp-1'}>
-                        {name}
-                    </h1>
-                    <p className={'text-sm line-clamp-2'}>{description}</p>
+            <div className={'glass mb-4 flex flex-col gap-4 overflow-hidden p-4 sm:p-5 md:flex-row md:items-center'}>
+                <div
+                    className={
+                        'pointer-events-none absolute -left-16 -top-24 h-56 w-56 rounded-full bg-violet-500/20 blur-3xl'
+                    }
+                />
+                <div className={'relative flex min-w-0 flex-1 items-center gap-4'}>
+                    <ServerTile uuid={uuid} name={name} size={'lg'} className={'hidden sm:flex'} />
+                    <div className={'min-w-0 flex-1'}>
+                        <div className={'flex flex-wrap items-center gap-x-3 gap-y-1'}>
+                            <h1
+                                className={
+                                    'min-w-0 truncate font-header text-2xl font-semibold leading-tight text-gray-50'
+                                }
+                            >
+                                {name}
+                            </h1>
+                            <StatusPill state={status || 'loading'} />
+                        </div>
+                        <p className={'mt-1 truncate text-sm text-neutral-400'}>
+                            {description || <span className={'text-neutral-500'}>Running on {node}</span>}
+                        </p>
+                    </div>
                 </div>
-                <div className={'col-span-4 sm:col-span-2 lg:col-span-1 self-end'}>
-                    <Can action={['control.start', 'control.stop', 'control.restart']} matchAny>
-                        <PowerButtons className={'flex sm:justify-end space-x-2'} />
-                    </Can>
-                </div>
+                <Can action={['control.start', 'control.stop', 'control.restart']} matchAny>
+                    <PowerButtons className={'relative flex gap-2 md:justify-end'} />
+                </Can>
             </div>
-            <div className={'grid grid-cols-4 gap-2 sm:gap-4 mb-4'}>
-                <div className={'flex col-span-4 lg:col-span-3'}>
+            <div className={'mb-4 grid grid-cols-4 gap-3 sm:gap-4'}>
+                <div className={'col-span-4 flex lg:col-span-3'}>
                     <Spinner.Suspense>
                         <Console />
                     </Spinner.Suspense>
                 </div>
-                <ServerDetailsBlock className={'col-span-4 lg:col-span-1 order-last lg:order-none'} />
+                <ServerDetailsBlock className={'order-last col-span-4 lg:order-none lg:col-span-1'} />
             </div>
-            <div className={'grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4'}>
+            <div className={'grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3'}>
                 <Spinner.Suspense>
                     <StatGraphs />
                 </Spinner.Suspense>

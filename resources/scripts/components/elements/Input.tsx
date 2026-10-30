@@ -40,8 +40,18 @@ const inputStyle = css<Props>`
     // Reset to normal styling.
     resize: none;
     ${tw`appearance-none outline-none w-full min-w-0`};
-    ${tw`p-3 border-2 rounded text-sm transition-all duration-150`};
-    ${tw`bg-neutral-600 border-neutral-500 hover:border-neutral-400 text-neutral-200 shadow-none focus:ring-0`};
+    ${tw`p-3 border rounded-lg text-sm transition-all duration-150`};
+    ${tw`text-neutral-100 shadow-none focus:ring-0`};
+    background-color: rgba(255, 255, 255, 0.045);
+    border-color: rgba(255, 255, 255, 0.1);
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    &::placeholder {
+        ${tw`text-neutral-500`};
+    }
 
     & + .input-help {
         ${tw`mt-1 text-xs`};

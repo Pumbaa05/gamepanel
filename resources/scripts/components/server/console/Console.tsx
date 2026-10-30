@@ -16,44 +16,54 @@ import { usePersistedState } from '@/plugins/usePersistedState';
 import { SocketEvent, SocketRequest } from '@/components/server/events';
 import classNames from 'classnames';
 import { ChevronDoubleRightIcon } from '@heroicons/react/solid';
+import { useStoreState } from '@/state/hooks';
 
 import 'xterm/css/xterm.css';
 import styles from './style.module.css';
 
 const theme = {
-    background: th`colors.black`.toString(),
+    background: 'rgba(0, 0, 0, 0)',
     cursor: 'transparent',
     black: th`colors.black`.toString(),
-    red: '#E54B4B',
-    green: '#9ECE58',
-    yellow: '#FAED70',
-    blue: '#396FE2',
-    magenta: '#BB80B3',
-    cyan: '#2DDAFD',
-    white: '#d0d0d0',
-    brightBlack: 'rgba(255, 255, 255, 0.2)',
-    brightRed: '#FF5370',
-    brightGreen: '#C3E88D',
-    brightYellow: '#FFCB6B',
-    brightBlue: '#82AAFF',
-    brightMagenta: '#C792EA',
-    brightCyan: '#89DDFF',
+    red: '#fb7185',
+    green: '#4ade80',
+    yellow: '#fcd34d',
+    blue: '#818cf8',
+    magenta: '#c084fc',
+    cyan: '#22d3ee',
+    white: '#d6dbe8',
+    brightBlack: 'rgba(255, 255, 255, 0.25)',
+    brightRed: '#fda4af',
+    brightGreen: '#86efac',
+    brightYellow: '#fde68a',
+    brightBlue: '#a5b4fc',
+    brightMagenta: '#d8b4fe',
+    brightCyan: '#67e8f9',
     brightWhite: '#ffffff',
-    selection: '#FAF089',
+    selection: 'rgba(122, 92, 255, 0.45)',
 };
+
+// Load the console font before xterm measures its character grid, otherwise the
+// columns are sized for the fallback font.
+const fontReady: Promise<unknown> =
+    typeof document !== 'undefined' && document.fonts
+        ? document.fonts.load('400 12px "JetBrains Mono"').catch(() => null)
+        : Promise.resolve();
 
 const terminalProps: ITerminalOptions = {
     disableStdin: true,
     cursorStyle: 'underline',
     allowTransparency: true,
     fontSize: 12,
+    lineHeight: 1.25,
     fontFamily: th('fontFamily.mono'),
     rows: 30,
     theme: theme,
 };
 
 export default () => {
-    const TERMINAL_PRELUDE = '\u001b[1m\u001b[33mcontainer@pterodactyl~ \u001b[0m';
+    const panelName = useStoreState((state) => state.settings.data?.name || 'pterodactyl');
+    const TERMINAL_PRELUDE = `\u001b[1m\u001b[35mcontainer@${panelName.toLowerCase().replace(/\s+/g, '-')}~ \u001b[0m`;
     const ref = useRef<HTMLDivElement>(null);
     const terminal = useMemo(() => new Terminal({ ...terminalProps }), []);
     const fitAddon = new FitAddon();
@@ -124,7 +134,11 @@ export default () => {
     };
 
     useEffect(() => {
-        if (connected && ref.current && !terminal.element) {
+        if (!connected) return;
+
+        fontReady.then(() => {
+            if (!ref.current || terminal.element) return;
+
             terminal.loadAddon(fitAddon);
             terminal.loadAddon(searchAddon);
             terminal.loadAddon(searchBar);
@@ -154,7 +168,7 @@ export default () => {
                 }
                 return true;
             });
-        }
+        });
     }, [terminal, connected]);
 
     useEventListener(
@@ -199,11 +213,33 @@ export default () => {
     }, [connected, instance]);
 
     return (
-        <div className={classNames(styles.terminal, 'relative')}>
+        <div className={classNames(styles.terminal, 'glass relative')}>
+            <div className={'flex items-center gap-3 border-b border-white/[0.06] px-4 py-2.5'}>
+                <span className={'flex gap-1.5'}>
+                    <span className={'h-2.5 w-2.5 rounded-full bg-rose-400/70'} />
+                    <span className={'h-2.5 w-2.5 rounded-full bg-amber-300/70'} />
+                    <span className={'h-2.5 w-2.5 rounded-full bg-emerald-400/70'} />
+                </span>
+                <p className={'eyebrow'}>Console</p>
+                <span
+                    className={classNames(
+                        'ml-auto inline-flex items-center gap-1.5 font-mono text-2xs uppercase tracking-wider',
+                        connected ? 'text-emerald-300' : 'text-neutral-500'
+                    )}
+                >
+                    <span
+                        className={classNames(
+                            'h-1.5 w-1.5 rounded-full',
+                            connected
+                                ? 'animate-pulse bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]'
+                                : 'bg-neutral-500'
+                        )}
+                    />
+                    {connected ? 'Live' : 'Connecting'}
+                </span>
+            </div>
             <SpinnerOverlay visible={!connected} size={'large'} />
-            <div
-                className={classNames(styles.container, styles.overflows_container, { 'rounded-b': !canSendCommands })}
-            >
+            <div className={classNames(styles.container, styles.overflows_container)}>
                 <div className={'h-full'}>
                     <div id={styles.terminal} ref={ref} />
                 </div>
@@ -222,7 +258,7 @@ export default () => {
                     />
                     <div
                         className={classNames(
-                            'text-gray-100 peer-focus:text-gray-50 peer-focus:animate-pulse',
+                            'text-violet-300 peer-focus:text-cyan-300 peer-focus:animate-pulse',
                             styles.command_icon
                         )}
                     >

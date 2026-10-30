@@ -8,7 +8,6 @@ import useFlash from '@/plugins/useFlash';
 import { useStoreState } from 'easy-peasy';
 import { usePersistedState } from '@/plugins/usePersistedState';
 import Switch from '@/components/elements/Switch';
-import tw from 'twin.macro';
 import useSWR from 'swr';
 import { PaginatedResult } from '@/api/http';
 import Pagination from '@/components/elements/Pagination';
@@ -22,6 +21,7 @@ export default () => {
     const { clearFlashes, clearAndAddHttpError } = useFlash();
     const uuid = useStoreState((state) => state.user.data!.uuid);
     const rootAdmin = useStoreState((state) => state.user.data!.rootAdmin);
+    const username = useStoreState((state) => state.user.data!.username);
     const [showOnlyAdmin, setShowOnlyAdmin] = usePersistedState(`${uuid}:show_all_servers`, false);
 
     const { data: servers, error } = useSWR<PaginatedResult<Server>>(
@@ -54,33 +54,58 @@ export default () => {
 
     return (
         <PageContentBlock title={'Dashboard'} showFlashKey={'dashboard'}>
-            {rootAdmin && (
-                <div css={tw`mb-2 flex justify-end items-center`}>
-                    <p css={tw`uppercase text-xs text-neutral-400 mr-2`}>
-                        {showOnlyAdmin ? "Showing others' servers" : 'Showing your servers'}
-                    </p>
-                    <Switch
-                        name={'show_all_servers'}
-                        defaultChecked={showOnlyAdmin}
-                        onChange={() => setShowOnlyAdmin((s) => !s)}
-                    />
+            <div className={'mb-6 flex flex-wrap items-end justify-between gap-4'}>
+                <div>
+                    <p className={'eyebrow'}>Welcome back, {username}</p>
+                    <h1 className={'mt-1.5 font-header text-3xl font-semibold tracking-tight text-gray-50'}>
+                        {showOnlyAdmin && rootAdmin ? (
+                            <>
+                                All <span className={'text-gradient'}>servers</span>
+                            </>
+                        ) : (
+                            <>
+                                Your <span className={'text-gradient'}>servers</span>
+                            </>
+                        )}
+                    </h1>
+                    {servers && (
+                        <p className={'mt-1 text-sm text-neutral-400'}>
+                            {servers.pagination.total} {servers.pagination.total === 1 ? 'server' : 'servers'}
+                            {showOnlyAdmin && rootAdmin ? ' owned by other users' : ' on your account'}
+                        </p>
+                    )}
                 </div>
-            )}
+                {rootAdmin && (
+                    <div className={'glass flex items-center gap-3 !rounded-xl py-2 pl-3.5 pr-2'}>
+                        <p className={'text-xs font-medium text-neutral-300'}>Show all servers</p>
+                        <Switch
+                            name={'show_all_servers'}
+                            defaultChecked={showOnlyAdmin}
+                            onChange={() => setShowOnlyAdmin((s) => !s)}
+                        />
+                    </div>
+                )}
+            </div>
             {!servers ? (
                 <Spinner centered size={'large'} />
             ) : (
                 <Pagination data={servers} onPageSelect={setPage}>
                     {({ items }) =>
                         items.length > 0 ? (
-                            items.map((server, index) => (
-                                <ServerRow key={server.uuid} server={server} css={index > 0 ? tw`mt-2` : undefined} />
-                            ))
+                            <div className={'grid gap-4 md:grid-cols-2 xl:grid-cols-3'}>
+                                {items.map((server) => (
+                                    <ServerRow key={server.uuid} server={server} />
+                                ))}
+                            </div>
                         ) : (
-                            <p css={tw`text-center text-sm text-neutral-400`}>
-                                {showOnlyAdmin
-                                    ? 'There are no other servers to display.'
-                                    : 'There are no servers associated with your account.'}
-                            </p>
+                            <div className={'glass px-6 py-12 text-center'}>
+                                <p className={'font-header text-lg text-neutral-200'}>Nothing here yet</p>
+                                <p className={'mt-1 text-sm text-neutral-400'}>
+                                    {showOnlyAdmin
+                                        ? 'There are no other servers to display.'
+                                        : 'There are no servers associated with your account.'}
+                                </p>
+                            </div>
                         )
                     }
                 </Pagination>
